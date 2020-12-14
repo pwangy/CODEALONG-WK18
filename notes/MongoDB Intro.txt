@@ -9,4 +9,4 @@ MongoDB Intro - Jennie, video
   a less strict type of db would be called SQL-free
   by using this type, it can stay more like javascript within arrays and objects.
 
-  this type can also be used to store relationship data - they store it differently than a relational db does. 
+  this type can also be used to store relationship data - they store it differently than a relational db does.
