@@ -17,7 +17,7 @@
     "cors": "*",
     "express": "*",
     "mongoose": "*",
-    "nodemon": "*",
+    "nodemon": "*"
   },
   "devDependencies": {
     "eslint": "*",
