@@ -10,3 +10,32 @@ MongoDB Intro - Jennie, video
   by using this type, it can stay more like javascript within arrays and objects.
 
   this type can also be used to store relationship data - they store it differently than a relational db does.
+
+  :: MongoDB on whiteboard
+  
+    This is a model. The name should begin with a capital letter and be camel-cased if more than one word.
+      Inside the model is the object-property and it's property models. (name, age, isFurry). 
+      The values are the type of values that are expected.
+      This defines the structure of our data
+
+  const Animal = mongoose.model("Animal", {
+    name: String,
+    age: Number,
+    isFurry: Boolean
+    })
+
+      Now that our model is defined, we can begin to use the data.
+    
+  const doggo = new Animal({
+    name: "Alfons",
+    age: 2,
+    isFurry: true
+  })
+  doggo.save()
+
+    defining this new variable won't do anything. we must use 'doggo.save()' to save doggo to the db. 
+
+
+:: in code
+  install community edition of mongo. 
+  https://docs.mongodb.com/manual/tutorial/install-mongodb-on-os-x/
