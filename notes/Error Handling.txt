@@ -1,2 +1,5 @@
 Error Handling - Damien, video
 
+How to send nice/useful error messages to your user when something unexpected happens.
+  the idea is to write code which can catch the error and send useful and actionable information to the user so it is easier for user to understand why the error occured and (if user error) correct the mistake so they reach the information they are looking for.
+  
