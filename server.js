@@ -3,107 +3,192 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 import mongoose from 'mongoose'
 
-const mongoUrl = process.env.MONGO_URL || "mongodb://localhost/books"
+import membersData from './data/technigo-staff.json'
+import rolesData from './data/technigo-roles.json'
+
+const mongoUrl = process.env.MONGO_URL || "mongodb://localhost/project-mongo"
 mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
 mongoose.Promise = Promise
 
-// import dotenv from 'dotenv'
-// dotenv.config()
-
-const Author = mongoose.model('Author', {
-  name: String
-})
-
-
-// To create a db which has a relationship to another defined db.
-const Book = mongoose.model('Book', {
-  title: String,
-  author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Author'
-  }
-})
-
-// we continue to bump into the issue of replicating db entries upon server restart. 
-// how to deal with this?
-// method 1: to clear everything every time the server is loaded ["await Author.deleteMany()"], n.b. this also results in generating new ids for each item every time.
-// method 2: instead of clearing the data and rewriting the db every time the server is loaded... wrap everything in an envronment variable in order to choose when to run the seed task which will reset everything. note: "RESET_DATABASE" can be renamed to anything you want. in order to invoke the process. you would have to write "RESET_DATABASE=TRUE npm run dev" in your console.
-if (process.env.RESET_DATABASE) {
-  console.log('Resetting database!')
-
-  const seedDatabase = async () => {
-    await Author.deleteMany()
-    await Book.deleteMany()
-  
-    const tolkien = new Author({ name: 'J.R.R. Tolkien' })
-    await tolkien.save()
-  
-    const rowling = new Author({ name: 'J.K. Rowling' })
-    await rowling.save()
-  
-    await new Book({ title: "Harry Potter and the Philosopher's Stone", author: rowling }).save()
-    await new Book({ title: "Harry Potter and the Chamber of Secrets", author: rowling }).save()
-    await new Book({ title: "Harry Potter and the Prisoner of Azkaban", author: rowling }).save()
-    await new Book({ title: "Harry Potter and the Goblet of Fire", author: rowling }).save()
-    await new Book({ title: "Harry Potter and the Order of the Phoenix", author: rowling }).save()
-    await new Book({ title: "Harry Potter and the Half-Blood Prince", author: rowling }).save()
-    await new Book({ title: "Harry Potter and the Deathly Hallows", author: rowling }).save()
-    await new Book({ title: "The Lord of the Rings", author: tolkien }).save()
-    await new Book({ title: "The Hobbit", author: tolkien }).save()
-  }
-  seedDatabase()
-}
-
-// set default port
 const port = process.env.PORT || 8080
 const app = express()
 
-// middlewares
 app.use(cors())
 app.use(bodyParser.json())
 
-// define route
-app.get('/', (req, res) => {
-  res.send('Hallå!') 
+const Member = new mongoose.model('Member', {
+  name: String,
+  surname: String,
+  role: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Role'
+  },
+  lettersInName: Number,
+  isPapa: Boolean
+});
+
+const Role = new mongoose.model('Role', {
+  description: String
 })
 
-// all authors
-app.get('/authors', async (req, res) => {
-  const authors = await Author.find()
-  res.json(authors)
-})
+if (process.env.RESET_DATABASE) {
 
-// a single author
-app.get('/authors/:id', async (req, res) => {
-  const author = await Author.findById(req.params.id)
-  if (author) {
-    res.json(author)
-  } else {
-    res.status(404).json({ error: 'Author not found' })
-  }
-})
+  // POPULATING DATABASE WITH ONE COLLECTION
 
-// all books by author
-app.get('/authors/:id/books', async (req, res) => {
-  const author = await Author.findById(req.params.id)
-  if (author) {
-    const books = await Book.find({ author: mongoose.Types.ObjectId(author.id) })
-    res.json(books)
-  } else {
-    res.status(404).json({ error: 'Author not found' })
-  }
+  // const populateDatabase = async () => {
+  //   await Member.deleteMany();
   
+  //   membersData.forEach(async item => {
+  //     const newMember = new Member(item);
+  //     await newMember.save();
+  //   })
+  // }
+  // populateDatabase();
+
+  // POPULATING DATABASE WITH TWO COLLECTIONS (WITH RELATIONS) - HARDCODED
+
+  // const codeCoach = new Role({
+  //   description: "Code coach"
+  // });
+  // codeCoach.save();
+
+  // const careerCoach = new Role({
+  //   description: "Career coach"
+  // });
+  // careerCoach.save();
+
+  // const projectManager = new Role({
+  //   description: "Project manager"
+  // })
+  // projectManager.save();
+
+
+  // const van = new Member({
+  //   name: "Van",
+  //   surname: "Taylor",
+  //   role: codeCoach,
+  //   lettersInName: 3,
+  //   isPapa: false
+  // })
+  // van.save();
+
+  // const poya = new Member({
+  //   name: "Poya",
+  //   surname: "Tavakolian",
+  //   role: projectManager,
+  //   lettersInName: 4,
+  //   isPapa: true
+  // })
+  // poya.save();
+
+  // const matilda = new Member({
+  //   name: "Matilda",
+  //   surname: "Arvidsson",
+  //   role: codeCoach,
+  //   lettersInName: 7,
+  //   isPapa: false
+  // })
+  // matilda.save();
+
+  // const maksymilian = new Member({
+  //   name: "Maksymilian",
+  //   surname: "Olszewski",
+  //   role: codeCoach,
+  //   lettersInName: 11,
+  //   isPapa: false
+  // })
+  // maksymilian.save();
+
+  // const petra = new Member({
+  //   name: "Petra",
+  //   surname: "Stenqvist",
+  //   role: careerCoach,
+  //   lettersInName: 5,
+  //   isPapa: false
+  // })
+  // petra.save();
+
+  // POPULATING DATABASE WITH TWO COLLECTIONS (WITH RELATIONS) - UNIVERSAL
+
+  const populateDatabase = async () => {
+
+    // First of all, we need to clear current content of two collections
+    await Role.deleteMany();
+    await Member.deleteMany();
+
+    // Next, we declare empty array in which we will later on
+    // store 3 instances (actual examples) of Role models
+    let roles = [];
+
+    rolesData.forEach( async item => {
+      const newRole = new Role(item);
+      
+      // We push each newRole to array roles
+      roles.push(newRole);
+      await newRole.save();
+    })
+  
+    membersData.forEach(async memberItem => {
+
+      // We create new member for element in membersData array from JSON file
+      // Important thing to notice: in JSON file we had property "role" with
+      // hardcoded string value. We need it to detect which role model should
+      // each member have. Later on, hardcoded "role" property will be
+      // overwritten by new "role" property, the one with value of ObjectId type.
+      // For further reference on that, check out last example from website below,
+      // the one about keys collision : https://davidwalsh.name/merge-objects
+      const newMember = new Member({
+        ...memberItem,
+        role: roles.find(roleItem => roleItem.description === memberItem.role)
+      });
+      await newMember.save();
+    })
+  }
+  populateDatabase();
+}
+
+// Start defining your routes here
+app.get('/', (req, res) => {
+  res.send('Hello world')
 })
 
-// all books
-app.get('/books', async (req, res) => {
-  const books = await Book.find().populate('author')
-  res.json(books)
+app.get('/members', async (req, res) => {
+  const allMembers = await Member.find(req.query).skip(2).limit(2);
+  res.json(allMembers);
 })
 
-// start server
+app.get('/members/:name', (req, res) => {
+  Member.findOne({ name: req.params.name })
+    .then(data => {
+      res.json(data);
+    })
+    .catch(error => {
+      res.status(400).json({ error: "Invalid name" });
+    })
+})
+
+app.get('/members/role/:role', (req, res) => {
+  Member.find(req.params, (err, data) => {
+    res.json(data);
+  })
+})
+
+app.get('/members/:id/role', async (req, res) => {
+
+  // Find for single member with ID from req.params
+  const singleMember = await Member.findById(req.params.id);
+
+  // Find role details for single member queried above
+  const singleMemberRole = await Role.findById(singleMember.role);
+
+  if (singleMemberRole) {
+    res.json(singleMemberRole);
+  } else {
+    res.json(404).json({ error: "Not found" });
+  }
+})
+
+// Start the server
 app.listen(port, () => {
-  console.log(`Server running http://localhost:${port}`)
+  console.log(`Server running on http://localhost:${port}`)
 })
-
-// next step here could be to add the error handling for the mongo connection as from the other video
